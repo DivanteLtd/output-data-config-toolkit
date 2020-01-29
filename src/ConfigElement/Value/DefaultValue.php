@@ -18,7 +18,9 @@ namespace OutputDataConfigToolkitBundle\ConfigElement\Value;
 use OutputDataConfigToolkitBundle\ConfigElement\AbstractConfigElement;
 use Pimcore\Bundle\EcommerceFrameworkBundle\Model\DefaultMockup;
 use Pimcore\Model\DataObject\AbstractObject;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Select;
 use Pimcore\Model\DataObject\Localizedfield;
+use Pimcore\Model\DataObject\Service;
 
 class DefaultValue extends AbstractConfigElement {
 
@@ -67,7 +69,15 @@ class DefaultValue extends AbstractConfigElement {
             }
         }
         if(method_exists($object, $getter) || $object instanceof DefaultMockup) {
-            $value = $object->$getter();
+
+            $def = $object->getClass()->getFieldDefinition($this->attribute);
+            if ($def instanceof Select) {
+                $values = Service::getOptionsForSelectField($object, $this->attribute);
+                $selectedValue = $values[$object->$getter()];
+                $value = $selectedValue;
+            } else {
+                $value = $object->$getter();
+            }
 
             if($object instanceof DefaultMockup || $object instanceof AbstractObject) {
                 $def = $object->getClass()->getFieldDefinition($this->attribute);
@@ -149,3 +159,4 @@ class DefaultValue extends AbstractConfigElement {
         return null;
     }
 }
+
